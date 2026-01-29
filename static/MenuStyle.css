@@ -1,0 +1,8 @@
+
+.link-active:active{
+    color: var(--bs-primary);
+}
+
+.link-active:hover {
+  text-decoration: underline;
+}
