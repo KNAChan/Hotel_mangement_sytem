@@ -52,8 +52,34 @@ def logout():
 @login_required
 def dashboard():
     name = session.get("username")
-    return render_template("dashboard.html",name=name)
+    total_checkin = DB.totalCheckin()
+    total_room = len(DB.total_rooms())
+    available_room = len(DB.get_available_rooms())
+    booked_room = DB.get_booked_room()
+    single_room,double_room,deluxe_room = DB.room_type()
 
+    if total_room > 0:
+        checkin_rate = (total_checkin / total_room) * 100 
+        available_rate = (available_room/total_room) * 100 
+        booked_rate = (booked_room/total_room) * 100
+    else:
+        checkin_rate = available_rate = booked_rate = 0
+
+    return render_template(
+        "dashboard.html",
+        name = name,
+        total_checkin = total_checkin,
+        total_room = total_room,
+        available_room = available_room,
+        booked_room = booked_room,
+        single_room = single_room,
+        double_room = double_room,
+        deluxe_room = deluxe_room,
+        checkin_rate = checkin_rate,
+        available_rate = available_rate,
+        booked_rate = booked_rate,
+        today_date = datetime.now().strftime("%B %d, %Y")
+        )
 
 @app.route('/manage_rooms',methods=['GET','POST'])
 @login_required
@@ -106,12 +132,12 @@ def delete_room_route(id):
 @login_required
 def manage_booking():
     query = request.args.get("q","").strip()
-    field = request.args.get("field","guest_name")
+    field = request.args.get("field","first_name")
 
     # whitelist fields (VERY IMPORTANT)-> to prevent SQL injection
-    allowed_fields = ("guest_name", "phone", "room_no")
+    allowed_fields = ("first_name","last_name", "phone", "room_no")
     if field not in allowed_fields:
-        field = "guest_name"
+        field = "first_name"
 
     # Pagination
     page = request.args.get('page', 1, type=int)
@@ -130,15 +156,31 @@ def manage_booking():
     
     return render_template('manage_booking.html',bookingdata=rows,query=query,field=field,page=page,total_pages=total_pages)
 
+def Cal_totalprice(booking):
+    today = date.today()
+    in_datetime = booking["check_in_date"]
+    in_date = datetime.strptime(in_datetime, "%Y-%m-%dT%H:%M").date()
+    out_datetime = booking["check_out_date"]
+    out_date = datetime.strptime(out_datetime, "%Y-%m-%dT%H:%M").date()
+    stays = (out_date - in_date).days
+    room = DB.get_room_bynumber(booking["room_no"])
+    price_per_room = room["price"] if room else 0 
+
+    return stays,price_per_room
+
 @app.route('/booking_operations/<mode>',methods=['GET','POST'])
 @app.route('/booking_operations/<mode>/<int:id>',methods=['GET','POST'])
 @login_required
 def booking_operations(mode,id=None):
     booking = None
+    stays = 0
+    price_per_room = 0
 
     if id:
         booking = DB.get_booking_byid(id)
         current_room = booking["room_no"] if booking else None
+        if booking:
+            stays, price_per_room = Cal_totalprice(booking)
     else:
         current_room = None
 
@@ -152,7 +194,7 @@ def booking_operations(mode,id=None):
             if booking:
                 DB.delete_booking(id)
                 # Mark the room as available
-                #DB.status_changed(booking["room_no"], status="Available")
+                DB.status_changed(booking["room_no"], status="Available")
             return redirect(url_for('manage_booking'))
 
         firstname = request.form.get("firstname","").strip()
@@ -163,12 +205,15 @@ def booking_operations(mode,id=None):
         check_in_date = request.form.get("check_in_date","").strip()
         check_out_date = request.form.get("Check-Out-Date","").strip()
         status = request.form.get("status","").strip()
-        #totalprice = request.form.get("price","").strip()
         dob = request.form.get("dob","").strip()
         email = request.form.get("email","").strip()
         Noadults = request.form.get("Noadults","").strip()
         Nokids = request.form.get("Nokids","").strip()
-
+        payment_type = request.form.get("payment_type","").strip()
+        holder_name = request.form.get("holder_name","").strip()
+        card_number = request.form.get("card_number","").strip()
+        CVV = request.form.get("CVV","").strip()
+        totalprice_input = request.form.get("price","").strip()
         
         errorList = {}
 
@@ -182,26 +227,18 @@ def booking_operations(mode,id=None):
             errorList["country"] = "country required"
         if not room_no:
             errorList["room_no"] = "choose room number"
-        if not check_in_date:
-            errorList["check_in_date"] = "check in date required"
-        else:
-            check_date = datetime.strptime(check_in_date, "%Y-%m-%dT%H:%M").date()
-            today = date.today()
-            if check_date < today:
-                errorList["check_in_date"] = "Check-in date cannot be earlier than today"
-        if not check_out_date:
-            errorList["check_out_date"] = "Check out date required"
-        else:
-            checkout_date = datetime.strptime(check_out_date, "%Y-%m-%dT%H:%M").date()
-            if checkout_date <= check_date:
-                errorList["check_out_date"] = "Check-out date must be after check-in date"
+
         if not dob:
             errorList["dob"] = "Date of birth required"
         else:
             d_date = datetime.strptime(dob,"%Y-%m-%d").date()
             today = date.today()
+            age = today.year - d_date.year - ((today.month, today.day) < (d_date.month, d_date.day))
+
             if d_date > today:
                 errorList["dob"] = "Date of birth can't be earlier than today"
+            elif age < 18:
+                errorList["dob"] = "You must be at least 18 years old"
         if not email:
             errorList["email"] = "email required"
         else:
@@ -211,27 +248,90 @@ def booking_operations(mode,id=None):
             errorList["Noadults"] = "Choose Number of adults"
         if not Nokids:
             errorList["Nokids"] = "Choose Number of kids"
-        
+        if not payment_type:
+            errorList["payment_type"] = "Choose payment type"
+        if not holder_name:
+            errorList["holder_name"] = "Enter holder name"
+        if not card_number or not card_number.isdigit() or len(card_number) != 16:
+            errorList["card_number"] = "Enter card number"      
+        if not CVV or not CVV.isdigit() or len(CVV) != 3:
+            errorList["CVV"] = "Enter CVV number" 
 
+        validate_check_in = False
+        validate_check_out = False
+
+        if mode == "insert":
+            validate_check_in = True
+            validate_check_out = True
+        elif mode == "update":
+            if status == "booked":
+                validate_check_in = True
+                validate_check_out = True
+            elif status == "check-in":
+                validate_check_in = False
+                validate_check_out = True
+            elif status == "check-out":
+                validate_check_in = False
+                validate_check_out = False
+        elif mode == "delete":
+            validate_check_in = False
+            validate_check_out = False  
+
+         # --- Check-in date validation ---
+        if validate_check_in:
+            if not check_in_date:
+                errorList["check_in_date"] = "Check-in date required"
+            else:
+                check_date = datetime.strptime(check_in_date, "%Y-%m-%dT%H:%M").date()
+                today = date.today()
+                if check_date < today:
+                    errorList["check_in_date"] = "Check-in date cannot be earlier than today"
+
+        # --- Check-out date validation ---
+        if validate_check_out:
+            if not check_out_date:
+                errorList["check_out_date"] = "Check-out date required"
+            else:
+                checkout_date = datetime.strptime(check_out_date, "%Y-%m-%dT%H:%M").date()
+                if validate_check_in and checkout_date <= check_date:
+                    errorList["check_out_date"] = "Check-out date must be after check-in date"
 
         if errorList:
-            return render_template("booking_operations.html",available_rooms=available_rooms,mode=mode,booking=booking,errorList=errorList,inputData=request.form)
+            return render_template(
+                "booking_operations.html",
+                available_rooms=available_rooms,
+                mode=mode,
+                booking=booking,
+                stays = stays,
+                price_per_room = price_per_room,
+                errorList=errorList,
+                inputData=request.form
+                )
 
-        room = DB.get_room_bynumber(room_no) 
-        totalprice = (room["price"])*(checkout_date - check_date).days
-        print(totalprice)
         if mode == 'insert':
-            DB.add_new_booking(firstname,lastname,phone,country,room_no,check_in_date,check_out_date,status,totalprice,dob,email,Noadults,Nokids)
+            DB.add_new_booking(firstname,lastname,phone,country,room_no,check_in_date,check_out_date,status,totalprice_input,dob,email,Noadults,Nokids,payment_type,holder_name,card_number,CVV)
             DB.status_changed(room_no,status)
         elif mode == 'update' and id:
-            DB.update_booking(id,firstname,lastname,phone,country,room_no,check_in_date,check_out_date,status,totalprice,dob,email,Noadults,Nokids)
+            stays,price_per_room = Cal_totalprice(booking)
+            totalprice = price_per_room * stays
+            DB.update_booking(id,firstname,lastname,phone,country,room_no,check_in_date,check_out_date,status,totalprice,dob,email,Noadults,Nokids,payment_type,holder_name,card_number,CVV)
             if status == 'Check out':
                 DB.status_changed(room_no,"Available")
             else:
                 DB.status_changed(room_no,status)
 
         return redirect(url_for('manage_booking'))
-    return render_template('booking_operations.html',available_rooms=available_rooms,mode=mode,booking=booking,errorList={},inputData={})
+    return render_template(
+        'booking_operations.html',
+        available_rooms=available_rooms,
+        mode=mode,
+        booking=booking,
+        stays = stays,
+        price_per_room = price_per_room,
+        errorList={},
+        inputData={}
+        )
+    
 
 #get room price dynamically
 @app.route('/get_room_price')
@@ -245,6 +345,18 @@ def get_room_price():
     if room:
         return {"price": int(room["price"])}
     return {"price": 0}
+
+
+@app.route('/price-analysis')
+@login_required
+def price_analysis():
+    view = request.args.get("view", "monthly")
+    labels, prices = DB.price_Cal(view)
+
+    return {
+        "labels": labels,
+        "prices": prices
+    }
 
 
 

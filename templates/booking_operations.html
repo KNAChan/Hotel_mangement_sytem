@@ -17,17 +17,17 @@
         <!-- First Name -->
         <div class="col-md-6">
           <label for="firstname" class="form-label fw-bold">First Name</label>
-          <input type="text" id="firstname" name="firstname" class="form-control" placeholder="Enter first Name" 
-           value="{{booking.firstname if booking else ' ' }}"
-           {% if mode == 'delete' %}disabled{% endif %} required>
-          <div id="firstnameError" class="text-danger mt-1">{{ errorList.name if errorList and errorList.name }}</div>
+          <input type="text" id="firstname" name="firstname" class="form-control" placeholder="Enter First name"
+          value="{{ booking.first_name if booking else ' ' }}"
+          {% if mode == 'delete' %}disabled{% endif %} required>
+          <div id="firstnameError" class="text-danger mt-1">{{ errorList.firstname if errorList and errorList.firstname }}</div>
         </div>
         
         <!-- Last Name -->
         <div class="col-md-6">
           <label for="lastname" class="form-label fw-bold">Last Name</label>
           <input type="text" id="lastname" name="lastname" class="form-control" placeholder="Enter Last Name" 
-           value="{{inputData.lastname if inputData.lastname else (booking.lastname if booking else ' ') }}"
+           value="{{inputData.last_name if inputData.last_name else (booking.last_name if booking else ' ') }}"
            {% if mode == 'delete' %}disabled{% endif %} required>
           <div id="lastnameError" class="text-danger mt-1">{{ errorList.lastname if errorList and errorList.lastname }}</div>
         </div>
@@ -69,31 +69,94 @@
         </div>
 
          <!-- Check in date -->
-        <div class="col-md-6">
+        <!-- <div class="col-md-6">
           <label for="check_in_date" class="form-label fw-bold">Check in Date</label>
           <input type="datetime-local" id="check_in_date" name="check_in_date" class="form-control" placeholder="Check-In-Date"
           value="{{ booking.check_in_date if booking else ' ' }}"
-          {% if mode == 'delete' %}disabled{% endif %} required>
+          {% if mode == 'delete' %}disabled{% endif %} {% if mode=='update' and booking.status in ['Check in','Check out'] %}readonly{% endif %} required>
           <div id="check_in_dateError" class="text-danger mt-1">{{ errorList.check_in_date if errorList and errorList.check_in_date }}</div>
-        </div>
+        </div> -->
+
+        <!-- Check in date -->
+<div class="col-md-6">
+  <label for="check_in_date" class="form-label fw-bold">Check in Date</label>
+
+  {% if mode == 'delete' or (mode=='update' and booking.status in ['Check in','Check out']) %}
+    <!-- Disabled for UI -->
+    <input type="datetime-local"
+           class="form-control"
+           value="{{ booking.check_in_date if booking else '' }}"
+           disabled>
+
+    <!-- Hidden input to submit value -->
+    <input type="hidden"
+           name="check_in_date"
+           value="{{ booking.check_in_date if booking else '' }}">
+  {% else %}
+    <input type="datetime-local"
+           id="check_in_date"
+           name="check_in_date"
+           class="form-control"
+           placeholder="Check-In-Date"
+           value="{{ booking.check_in_date if booking else '' }}"
+           required>
+  {% endif %}
+
+  <div id="check_in_dateError" class="text-danger mt-1">
+    {{ errorList.check_in_date if errorList and errorList.check_in_date }}
+  </div>
+</div>
+
+        
         
         <!-- Check out date -->
-        <div class="col-md-6">
+        <!-- <div class="col-md-6">
           <label for="Check-Out-Date" class="form-label fw-bold">Check out date</label>
           <input type="datetime-local" id="Check-Out-Date" name="Check-Out-Date" class="form-control" placeholder="Check-Out-Date"
           value="{{  booking.check_out_date if booking else ' ' }}"
-          {% if mode == 'delete' %}disabled{% endif %} required>
+          {% if mode == 'delete' or (mode=='update' and booking.status=='Check out') %}readonly{% endif %} required>
           <div id="Check-Out-DateError" class="text-danger mt-1">{{ errorList.check_out_date if errorList and errorList.check_out_date }}</div>
-        </div>
+        </div> -->
+
+        <!-- Check out date -->
+<div class="col-md-6">
+  <label for="Check-Out-Date" class="form-label fw-bold">Check out date</label>
+
+  {% if mode == 'delete' or (mode=='update' and booking.status=='Check out') %}
+    <!-- Disabled input for UX -->
+    <input type="datetime-local"
+           class="form-control"
+           value="{{ booking.check_out_date if booking else '' }}"
+           disabled>
+
+    <!-- Hidden input to submit value -->
+    <input type="hidden"
+           name="Check-Out-Date"
+           value="{{ booking.check_out_date if booking else '' }}">
+  {% else %}
+    <input type="datetime-local"
+           id="Check-Out-Date"
+           name="Check-Out-Date"
+           class="form-control"
+           placeholder="Check-Out-Date"
+           value="{{ booking.check_out_date if booking else '' }}"
+           required>
+  {% endif %}
+
+  <div id="Check-Out-DateError" class="text-danger mt-1">
+    {{ errorList.check_out_date if errorList and errorList.check_out_date }}
+  </div>
+</div>
+
 
         <!-- Number of adults -->
         <div class="col-md-6">
           <label for="Noadults" class="form-label fw-bold">How many adults</label>
           <select id="Noadults" name="Noadults" class="form-select" {% if mode == 'delete' %}disabled{% endif %} required>        
             <option value="" disabled selected>select one</option>
-            <option {{ 'selected' if booking.Noadults==1 }}>1</option>
-            <option {{ 'selected' if booking.Noadults==2 }}>2</option>
-            <option {{ 'selected' if booking.Noadults==3 }}>3</option>
+            <option {{ 'selected' if booking.no_of_adults==1 }}>1</option>
+            <option {{ 'selected' if booking.no_of_adults==2 }}>2</option>
+            <option {{ 'selected' if booking.no_of_adults==3 }}>3</option>
           </select>
           <div id="NoadultsError" class="text-danger mt-1">{{ errorList.Noadults if errorList and errorList.Noadults }}</div>
         </div>
@@ -103,10 +166,10 @@
           <label for="Nokids" class="form-label fw-bold">How many kids</label>
           <select id="Nokids" name="Nokids" class="form-select" {% if mode == 'delete' %}disabled{% endif %} required>        
             <option value="" disabled selected>select one</option>
-            <option value="0" {{ 'selected' if booking.Nokids==0 }}>0</option>
-            <option value="1" {{ 'selected' if booking.Nokids==1 }}>1</option>
-            <option value="2" {{ 'selected' if booking.Nokids==2 }}>2</option>
-            <option value="3" {{ 'selected' if booking.Nokids==3 }}>3</option>
+            <option value="0" {{ 'selected' if booking.no_of_kids==0 }}>0</option>
+            <option value="1" {{ 'selected' if booking.no_of_kids==1 }}>1</option>
+            <option value="2" {{ 'selected' if booking.no_of_kids==2 }}>2</option>
+            <option value="3" {{ 'selected' if booking.no_of_kids==3 }}>3</option>
           </select>
           <div id="NokidsError" class="text-danger mt-1">{{ errorList.Nokids if errorList and errorList.Nokids }}</div>
         </div>
@@ -129,52 +192,72 @@
         </div>
 
         <!-- Status -->
-        <div class="col-md-6">
-          <label for="status" class="form-label fw-bold">Status</label>
-          <select id="status" name="status" class="form-select" {% if mode == 'delete' %}disabled{% endif %} required>
-            <option {{ 'selected' if booking.status=='Booked' }}>Booked</option>
-            <option {{ 'selected' if booking.status=='Check_in' }}>Check in</option>
-            <option {{ 'selected' if booking.status=='Check_out' }}>Check out</option>
-          </select>
-        </div> 
+<div class="col-md-6">
+  <label for="status" class="form-label fw-bold">Status</label>
+
+  {% if mode=='update' and booking.status=='Check out' or mode=='delete' %}
+    <!-- Show disabled select for UX -->
+    <select id="status" class="form-select" disabled>
+      <option selected>{{ booking.status }}</option>
+    </select>
+    <!-- Hidden input to submit value to backend -->
+    <input type="hidden" name="status" value="{{ booking.status }}">
+  {% else %}
+    <select id="status" name="status" class="form-select" required>
+      <option value="Booked" 
+        {{ 'selected' if booking.status=='Booked' }} 
+        {% if mode=='update' and booking.status in ['Check in','Check out'] %}disabled{% endif %}>
+        Booked
+      </option>
+      <option value="Check in" 
+        {{ 'selected' if booking.status=='Check in' }} 
+        {% if mode=='update' and booking.status=='Check out' %}disabled{% endif %}>
+        Check in
+      </option>
+      <option value="Check out" {{ 'selected' if booking.status=='Check out' }}> Check out
+      </option>
+    </select>
+  {% endif %}
+</div>
+
 
         <!-- Payment type -->
-        <div class="col-md-12">
         <div class="col-md-6"> 
-          <label for="paymenttype" class="form-label fw-bold">Payment Type</label>
-          <select id="paymenttype" name="paymenttype" class="form-select" {% if mode == 'delete' %}disabled{% endif %} required>
-            <option value="" disabled selected>Select payment type</option>
-            <option value="visa" {{ 'selected' if booking.paymenttype=='Visa' }}>
-              <span><img src="/static/img/master.png"/></span> Visa</option>
-            <option value="master" {{ 'selected' if booking.paymenttype=='Master' }}>Master</option>
-            <option value="americanExpress" {{ 'selected' if booking.paymenttype=='Check_out' }}>American express</option>
+          <label for="payment_type" class="form-label fw-bold">Payment Type</label>
+          <select id="payment_type" name="payment_type" class="form-select" 
+          {% if mode == 'delete' %}disabled{% endif %} required>
+            <option {{ 'selected' if booking.payment_type and booking.payment_type.lower()=='visa' }}>Visa</option>
+            <option {{ 'selected' if booking.payment_type and booking.payment_type.lower()=='master' }}>Master</option>
+            <option {{ 'selected' if booking.payment_type and booking.payment_type.lower()=='americanExpress' }}>American express</option>
           </select>
         </div>
-        </div> 
 
         <!-- Card holder Name -->
         <div class="col-md-6">
-          <label for="cardholdername" class="form-label fw-bold">Card holder Name</label>
-          <input type="text" id="cardholdername" name="cardholdername" class="form-control" placeholder="Enter Card holder Name" 
-           value="{{inputData.cardholdername if inputData.cardholdername else (booking.cardholdername if booking else ' ') }}"
+          <label for="holder_name" class="form-label fw-bold">Card holder Name</label>
+          <input type="text" id="holder_name" name="holder_name" class="form-control" placeholder="Enter Card holder Name" 
+           value="{{inputData.holder_name if inputData.holder_name else (booking.holder_name if booking else ' ') }}"
            {% if mode == 'delete' %}disabled{% endif %} required>
-          <div id="cardholdernameError" class="text-danger mt-1">{{ errorList.cardholdername if errorList and errorList.cardholdername }}</div>
+          <div id="holder_nameError" class="text-danger mt-1">{{ errorList.holder_name if errorList and errorList.holder_name }}</div>
         </div>
 
         <!-- Card Number -->
         <div class="col-md-6">
-          <label for="cardnumber" class="form-label fw-bold">Card Number</label>
-          <input type="text" id="cardnumber" name="cardnumber" class="form-control" placeholder="Enter Card Number"
-          value="{{ booking.cardnumber if booking else ' ' }}"
+          <label for="card_number" class="form-label fw-bold">Card Number</label>
+          <input type="text" id="card_number" name="card_number" class="form-control" placeholder="1234 5678 9012"
+          value="{{ booking.card_number if booking else ' ' }}"
           {% if mode == 'delete' %}disabled{% endif %} required>
-          <div id="cardnumberError" class="text-danger mt-1">{{ errorList.cardnumber if errorList and errorList.cardnumber }}</div>
+          <div id="card_numberError" class="text-danger mt-1">{{ errorList.card_number if errorList and errorList.card_number }}</div>
         </div>        
         
-        <!-- Dynamic Price -->
-        <!-- <div class="col-md-4 mt-top">
-          <div id="room_price_display" class="fw-bold">0.00</div>
-          <input type="hidden" name="price" id="price">
-        </div> -->
+        <!-- CVV Number -->
+        <div class="col-md-6">
+          <label for="CVV" class="form-label fw-bold">CVV Number</label>
+          <input type="text" id="CVV" name="CVV" class="form-control" placeholder="123"
+          value="{{ booking.CVV if booking else ' ' }}"
+          {% if mode == 'delete' %}disabled{% endif %} required>
+          <div id="CVVError" class="text-danger mt-1">{{ errorList.CVV if errorList and errorList.CVV }}</div>
+        </div> 
 
 <div class="row justify-content-center mt-4">
 <!-- Invoice -->
@@ -186,12 +269,14 @@
     <div class="card-body">
       <div class="d-flex justify-content-between">
         <span>Room price</span>
-        <span>$<span id="one_room_price">0</span></span>
+        <span>
+          $<span id="one_room_price">{{ price_per_room if mode!='insert' else 0 }}</span>
+        </span>
       </div>
 
       <div class="d-flex justify-content-between">
         <span>Stay</span>
-        <span><span id="stays">0</span> night(s)</span>
+        <span><span id="stays">{{ stays if mode != 'insert' else 0 }}</span> night(s)</span>
       </div>
 
       <hr>
@@ -199,8 +284,12 @@
       <div class="d-flex justify-content-between fw-bold fs-5">
         <span>Total price</span>
         <span class="text-success">
+        {% if mode == 'insert' %}
           $<span id="room_price_display">0</span>
           <input type="hidden" name="price" id="price">
+        {% else %}
+          ${{ booking.totalprice if booking else 0 }}
+        {% endif %}
         </span>
       </div>
     </div>
@@ -229,6 +318,8 @@
     </div>
   </div>
 </div>
+
+{% if mode == 'insert' %}
 <script>
 document.addEventListener("DOMContentLoaded", function() {
   const roomSelect = document.getElementById("room_no");
@@ -294,5 +385,5 @@ document.addEventListener("DOMContentLoaded", function() {
   checkOut.addEventListener("change", updatePrice);
 });
 </script>
-
+{% endif %}
 {% endblock %}

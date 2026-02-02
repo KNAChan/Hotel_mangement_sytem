@@ -1,9 +1,13 @@
 import sqlite3
+from datetime import datetime,timedelta
+import random
 
 class Database():
     def __init__(self):
         self.createTable()
         self.createBookingTable()
+        #self.inject_test_data()
+        #self.delete_allBooking_info()
         #self.delete_Table()
 
     # Create a new connection for each operation
@@ -92,6 +96,43 @@ class Database():
         con.close()
         return rooms
 
+    def total_rooms(self):
+        con = self.get_conn()
+        cursor = con.cursor() 
+        cursor.execute("SELECT * FROM Rooms")
+        room = cursor.fetchone()
+        con.close()
+        return room
+
+    def room_type(self):
+        con = self.get_conn()
+        cursor = con.cursor() 
+        cursor.execute("SELECT COUNT(*) FROM Rooms WHERE room_type='Single'")
+        single_room = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM Rooms WHERE room_type='Double'")
+        double_room = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM Rooms WHERE room_type='Deluxe'")
+        deluxe_room = cursor.fetchone()[0]
+        con.close()
+        return single_room,double_room,deluxe_room
+
+    def totalCheckin(self):
+        con = self.get_conn()
+        cursor = con.cursor()
+        cursor.execute("SELECT COUNT(*) FROM Rooms WHERE status =?",("Check in",))
+        tot = cursor.fetchone()[0]
+        con.close()
+        return tot
+
+    def get_booked_room(self):
+        con = self.get_conn()
+        cursor = con.cursor()
+        cursor.execute("SELECT COUNT(*) FROM Rooms WHERE status = 'Booked'")
+        booked_room = cursor.fetchone()[0]
+        con.close()
+        return booked_room
+
+
 #/////////////////////////////////////////////////////////////////
 
     def createBookingTable(self):
@@ -112,17 +153,21 @@ class Database():
         DOB TEXT,
         email TEXT,
         no_of_adults INTEGER,
-        no_of_kids INTEGER
+        no_of_kids INTEGER,
+        payment_type TEXt,
+        holder_name TEXT,
+        card_number INTEGER,
+        CVV INTEGER
         )
         """)
         con.commit()
         con.close()
 
-    def add_new_booking(self,firstname,lastname,phone,country,room_no,check_in_date,check_out_date,status,totalprice,dob,email,Noadults,Nokids):
+    def add_new_booking(self,firstname,lastname,phone,country,room_no,check_in_date,check_out_date,status,totalprice,dob,email,Noadults,Nokids,payment_type,holder_name,card_number,CVV):
         con = self.get_conn()
         cursor = con.cursor()
-        cursor.execute("INSERT INTO Bookings(first_name,last_name,phone,country,room_no,check_in_date,check_out_date,status,totalprice,DOB,email,no_of_adults,no_of_kids)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
-        (firstname,lastname,phone,country,room_no,check_in_date,check_out_date,status,totalprice,dob,email,Noadults,Nokids))
+        cursor.execute("INSERT INTO Bookings(first_name,last_name,phone,country,room_no,check_in_date,check_out_date,status,totalprice,DOB,email,no_of_adults,no_of_kids,payment_type,holder_name,card_number,CVV)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (firstname,lastname,phone,country,room_no,check_in_date,check_out_date,status,totalprice,dob,email,Noadults,Nokids,payment_type,holder_name,card_number,CVV))
         con.commit()
         con.close()
 
@@ -130,7 +175,7 @@ class Database():
         offset = (page - 1)* per_page
         con = self.get_conn()
         cursor = con.cursor()
-        cursor.execute("SELECT * FROM Bookings LIMIT ? OFFSET ?",(per_page,offset))
+        cursor.execute("SELECT * FROM Bookings  ORDER BY check_in_date DESC LIMIT ? OFFSET ?",(per_page,offset))
         rows = cursor.fetchall()
         cursor.execute("SELECT count(*) as total FROM Bookings")
         total = cursor.fetchone()["total"]
@@ -159,11 +204,11 @@ class Database():
         con.close()
         return total,rows if rows else []
 
-    def update_booking(self,book_id,firstname,lastname,phone,country,room_no,check_in_date,check_out_date,status,totalprice,dob,email,Noadults,Nokids):
+    def update_booking(self,book_id,firstname,lastname,phone,country,room_no,check_in_date,check_out_date,status,totalprice,dob,email,Noadults,Nokids,payment_type,holder_name,card_number,CVV):
         con = self.get_conn()
         cursor = con.cursor()
-        cursor.execute("UPDATE Bookings SET first_name=?,last_name=?, phone=?, country=?, room_no=?, check_in_date=?, check_out_date=?, status=?, totalprice=?, DOB=?, email=?, no_of_adults=?, no_of_kids=? WHERE book_id=?",
-        (firstname,lastname,phone,country,room_no,check_in_date,check_out_date,status,totalprice,dob,email,Noadults,Nokids,book_id))
+        cursor.execute("UPDATE Bookings SET first_name=?,last_name=?, phone=?, country=?, room_no=?, check_in_date=?, check_out_date=?, status=?, totalprice=?, DOB=?, email=?, no_of_adults=?, no_of_kids=?,payment_type=?,holder_name=?,card_number=?,CVV=?  WHERE book_id=?",
+        (firstname,lastname,phone,country,room_no,check_in_date,check_out_date,status,totalprice,dob,email,Noadults,Nokids,payment_type,holder_name,card_number,CVV,book_id))
         con.commit()
         con.close() 
 
@@ -189,3 +234,67 @@ class Database():
         (status,room_no))
         con.commit()
         con.close()
+
+
+    def price_Cal(self,view):
+        con = self.get_conn()
+        cursor = con.cursor()
+
+        if view == "monthly":
+            query = """ 
+            SELECT
+                strftime('%Y-%m', check_out_date) AS period,
+                SUM(totalprice) AS total_price
+            FROM Bookings
+            GROUP BY period
+            ORDER BY period 
+            """
+        else:
+            query = """ 
+            SELECT
+                strftime('%Y', check_out_date) AS period,
+                SUM(totalprice) AS total_price
+            FROM Bookings
+            GROUP BY period
+            ORDER BY period
+            """
+
+        rows = cursor.execute(query).fetchall()
+
+        labels = [row[0] for row in rows]
+        prices = [row[1] for row in rows]
+
+        con.close()
+        return {
+            "labels" : labels,
+            "prices" : prices
+        }
+
+    def delete_allBooking_info(self):
+        con = self.get_conn()
+        cursor = con.cursor()
+        cursor.execute("DELETE FROM Bookings")
+        con.commit()
+        con.close()     
+
+
+    # inject_test_data() # Uncomment to run   
+    def inject_test_data(self):
+        con =  self.get_conn()# Update with your DB name
+        cursor = con.cursor()
+    
+        # Let's create 1 fake booking for each of the last 6 months
+        for i in range(6):
+            # Calculate a date in the past
+            past_date = (datetime.now() - timedelta(days=i*30)).strftime('%Y-%m-%dT%H:%M')
+        
+            cursor.execute("""
+                INSERT INTO Bookings(first_name, last_name, status, totalprice, check_in_date)
+                VALUES (?, ?, ?, ?, ?)
+            """, (f"Guest_{i}", "Test", "Check out", random.randint(200, 800), past_date))
+        
+        con.commit()
+        con.close()
+        print("Success! You now have 6 months of fake data to see your chart.")
+
+    # inject_test_data() # Uncomment to run

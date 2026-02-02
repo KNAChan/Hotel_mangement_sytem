@@ -1,8 +1,175 @@
 {% extends "base.html" %}
-
-{% block title %}Dashboard{% endblock %}
+{% block title %}Admin Dashboard{% endblock %}
 
 {% block content %}
-    <h1>This is Dashboard</h1>
-    <h2>Welcome admin {{ name }}</h2>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<div class="container-fluid py-4" style="background-color: #f8f9fa; min-height: 100vh;">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0">Dashboard</h2>
+            <p class="text-muted">Welcome back, <span class="text-primary fw-bold">{{ name }}</span></p>
+        </div>
+        <div class="text-muted">
+            <i class="far fa-calendar-alt me-2"></i> {{ today_date if today_date else "Today" }}
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3">
+                        <i class="fas fa-users text-primary fa-lg"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-0">Checked-In</h6>
+                        <h4 class="fw-bold mb-0">{{ total_checkin }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3">
+                <div class="d-flex align-items-center">
+                    <div class="bg-warning bg-opacity-10 p-3 rounded-3 me-3">
+                        <i class="fas fa-calendar-check text-warning fa-lg"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-0">Booked</h6>
+                        <h4 class="fw-bold mb-0">{{ booked_room }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3">
+                <div class="d-flex align-items-center">
+                    <div class="bg-success bg-opacity-10 p-3 rounded-3 me-3">
+                        <i class="fas fa-door-open text-success fa-lg"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-0">Total Rooms</h6>
+                        <h4 class="fw-bold mb-0">{{ total_room }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3">
+                <div class="d-flex align-items-center">
+                    <div class="bg-info bg-opacity-10 p-3 rounded-3 me-3">
+                        <i class="fas fa-check-circle text-info fa-lg"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-0">Available Room</h6>
+                        <h4 class="fw-bold mb-0">{{ available_room }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">Revenue Analysis</h5>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="loadChart('monthly')">Monthly</button>
+                        <button class="btn btn-outline-primary" onclick="loadChart('yearly')">Yearly</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="priceChart" style="max-height: 350px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3">Room Status</h5>
+                    
+                    <label class="small text-muted mb-1">Available Rooms</label>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-info" aria-valuenow="{{available_rate}}" style="width: {{available_rate}}%"></div>
+                    </div>
+
+                    <label class="small text-muted mb-1">Current Check-in</label>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-success" aria-valuenow="{{checkin_rate}}" style="width: {{checkin_rate}}%"></div>
+                    </div>
+
+                    <label class="small text-muted mb-1">Booking Density</label>
+                    <div class="progress mb-4" style="height: 10px;">
+                        <div class="progress-bar bg-warning" aria-valuenow="{{booked_rate}}" style="width: {{booked_rate}}%"></div>
+                    </div>
+
+                    <hr>
+
+                    <h6 class="fw-bold">Inventory by Type</h6>
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Single Room</span>
+                            <span class="badge bg-secondary rounded-pill">{{ single_room }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Double Room</span>
+                            <span class="badge bg-secondary rounded-pill">{{ double_room }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Deluxe Suite</span>
+                            <span class="badge bg-secondary rounded-pill">{{ deluxe_room }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Your existing loadChart logic remains mostly the same, 
+    // but update the borderColor to a modern blue: #0d6efd
+    let chart;
+    function loadChart(view = 'monthly') {
+        fetch(`/price-analysis?view=${view}`)
+            .then(res => res.json())
+            .then(data => drawChart(data.labels, data.prices, view));
+    }
+
+    function drawChart(labels, prices, view) {
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        if (chart) chart.destroy();
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: view === 'monthly' ? 'Monthly Revenue ($)' : 'Yearly Revenue ($)',
+                    data: prices,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.05)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 5,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { display: false } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+    document.addEventListener("DOMContentLoaded", () => loadChart('monthly'));
+</script>
 {% endblock %}

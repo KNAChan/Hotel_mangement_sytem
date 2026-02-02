@@ -63,7 +63,11 @@
           <td>{{ r.room_type }}</td>
           <td>${{ r.price }}</td>
           <td>
-            <span class="badge bg-{{ 'success' if r.status=='Available' else 'danger' }}">
+            <span class="badge 
+            {% if r.status=='Available' %}bg-success
+            {% elif r.status == 'Booked' %}bg-warning
+            {% else %}bg-danger
+            {% endif %}">
               {{ r.status }}
             </span>
           </td>

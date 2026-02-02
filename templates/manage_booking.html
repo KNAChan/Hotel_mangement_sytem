@@ -26,7 +26,8 @@
         <!-- Combo box for search field -->
         <label class="form-label fw-bold">Search By</label>
         <select name="field" class="form-select" style="width: 180px;">
-          <option value="guest_name" {% if field=='guest_name' %}selected{% endif %}>Guest Name</option>
+          <option value="first_name" {% if field=='first_name' %}selected{% endif %}>First Name</option>
+          <option value="last_name" {% if field=='last_name' %}selected{% endif %}>Last Name</option>
           <option value="phone" {% if field=='phone' %}selected{% endif %}>Phone Number</option>
           <option value="room_no" {% if field=='room_no' %}selected{% endif %}>Room Number</option>
         </select>
@@ -78,9 +79,6 @@
           <th>Email</th>
           <th>Check-In-Date</th>
           <th>Check-Out-Date</th>
-          <th>No of adults</th>
-          <th>No of kids</th>
-          <th>TotalPrice</th>
           <th>Status</th>
           <th>Action</th>
         </tr>
@@ -96,20 +94,19 @@
           <td>{{ b.email }}</td>
           <td>{{ b.check_in_date }}</td>
           <td>{{ b.check_in_date }}</td>
-          <td>{{b.no_of_adults}}</td>
-          <td>{{b.no_of_kids}}</td>
-          <td>{{b.totalprice}}</td>
           <td>
             <span class="badge bg-{{ 'success' if b.status=='Booked' else 'danger' }}">{{ b.status }}
             </span>
           </td>
           <td>
-            <a href="{{ url_for('booking_operations',mode = 'update', id=b.book_id) }}" class="btn btn-sm btn-warning">
-              <i class="bi bi-pencil-square"></i>
-            </a>
             <a href="{{ url_for('booking_operations',mode = 'delete', id=b.book_id) }}" class="btn btn-sm btn-danger" >
               <i class="bi bi-trash"></i>
             </a>
+            {% if b.status != 'Check out' %}
+            <a href="{{ url_for('booking_operations',mode = 'update', id=b.book_id) }}" class="btn btn-sm btn-warning">
+              <i class="bi bi-pencil-square"></i>
+            </a>
+            {% endif %}
           </td>
         </tr>
         {% else %}
