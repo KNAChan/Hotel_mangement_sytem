@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: sans-serif; color: #333; }
+        .header { text-align: center; margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+        th { background-color: #f2f2f2; }
+        .footer { margin-top: 20px; font-size: 10px; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Hotel Management System</h1>
+        <h2>Booking Report</h2>
+        <p>Filtered Results: {{ start_date if start_date else 'All Time' }} to {{ end_date if end_date else 'Today' }}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Guest Name</th>
+                <th>Room Number</th>
+                <th>Phone</th>
+                <th>Country</th>
+                <th>Check-In Time</th>
+                <th>Check-Out Time</th>
+                <th>Status</th>
+                <th>Total Price</th>
+                <th>DOB</th>
+                <th>Email</th>
+                <th>No. of Adults/kids</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for b in bookingdata %}
+            <tr>
+                <td>{{ b.book_id }}</td>
+                <td>{{ b.first_name }} {{ b.last_name }}</td>
+                <td>{{ b.room_no }}</td>
+                <td>{{ b.phone }}</td>
+                <td>{{b.country}}</td>
+                <td>{{ b.check_in_date }}</td>
+                <td>{{ b.check_out_date }}</td>
+                <td>{{ b.status }}</td>
+                <td>{{b.totalprice}}</td>
+                <td>{{b.DOB}}</td>
+                <td>{{b.email}}</td>
+                <td>{{b.no_of_adults}}/{{b.no_of_kids}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Generated on: {{ current_date }}
+    </div>
+</body>
+</html>

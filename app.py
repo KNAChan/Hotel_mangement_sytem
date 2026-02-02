@@ -1,9 +1,10 @@
-from flask import Flask,render_template,redirect,request,url_for,session,flash
+from flask import Flask,render_template,redirect,request,url_for,session,flash,make_response
 from AdminClass import Admin
 from database import Database
 import os
 from functools import wraps
 from datetime import datetime,date
+import pdfkit
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret-key-for-admin-John"
@@ -104,6 +105,12 @@ def manage_rooms():
 
     return render_template('manage_rooms.html',rooms=rooms,page=page,total_pages=total_pages)
 
+
+@app.route('/add_room')
+@login_required
+def add_room():
+    return render_template('add_rooms.html')
+
 @app.route('/edit_room/<int:id>',methods=['GET','POST'])
 @login_required
 def edit_room(id):
@@ -133,20 +140,20 @@ def delete_room_route(id):
 def manage_booking():
     query = request.args.get("q","").strip()
     field = request.args.get("field","first_name")
+    start_date = request.args.get("start_date",'')
+    end_date = request.args.get("end_date",'') 
+    page = request.args.get('page',1,type=int)
+    
 
     # whitelist fields (VERY IMPORTANT)-> to prevent SQL injection
-    allowed_fields = ("first_name","last_name", "phone", "room_no")
+    allowed_fields = ("first_name", "phone", "room_no","check_in_date","check_out_date")
     if field not in allowed_fields:
         field = "first_name"
 
     # Pagination
-    page = request.args.get('page', 1, type=int)
-    per_page = 5
+    per_page = 9
 
-    if query:
-        total,rows = DB.search_booking_paginated(field,query,page,per_page)
-    else:
-        rows,total = DB.view_booking_paginated(page,per_page)
+    total,rows = DB.search_booking_paginated(field,query,start_date,end_date,page,per_page)
 
     total_pages = (total + per_page - 1) // per_page  # ceiling division
 
@@ -154,7 +161,15 @@ def manage_booking():
         mode = request.form.get("mode")
         return redirect(url_for('booking_operations',mode=mode))
     
-    return render_template('manage_booking.html',bookingdata=rows,query=query,field=field,page=page,total_pages=total_pages)
+    return render_template(
+        'manage_booking.html',
+        bookingdata=rows,
+        query=query,
+        field=field,
+        start_date = start_date,
+        end_date = end_date,
+        page=page,
+        total_pages=total_pages)
 
 def Cal_totalprice(booking):
     today = date.today()
@@ -351,14 +366,44 @@ def get_room_price():
 @login_required
 def price_analysis():
     view = request.args.get("view", "monthly")
-    labels, prices = DB.price_Cal(view)
+  
+    return DB.price_Cal(view)
 
-    return {
-        "labels": labels,
-        "prices": prices
+
+@app.route('/export_bookings_pdf')
+@login_required
+def export_bookings_pdf():
+    # 1. Capture the current filters so the PDF matches what the user sees on screen
+    query = request.args.get("q", "").strip()
+    field = request.args.get("field", "first_name")
+    start_date = request.args.get("start_date", "")
+    end_date = request.args.get("end_date", "")
+
+    #search_booking_paginated() returns total,rows but we don't need total so -,
+    _, rows = DB.search_booking_paginated(field, query, start_date, end_date, page=1, per_page=1000)
+
+    html = render_template('pdf_report.html', bookingdata=rows, start_date=start_date, end_date=end_date,current_date=datetime.now())
+
+    # 4. PDF Options (Portrait/Landscape, Margins)
+    options = {
+        'page-size': 'A4',
+        'margin-top': '0.75in',
+        'margin-right': '0.75in',
+        'margin-bottom': '0.75in',
+        'margin-left': '0.75in',
+        'encoding': "UTF-8",
     }
+
+    # 5. Generate PDF
+    pdf = pdfkit.from_string(html, False, options=options)
+
+    response = make_response(pdf)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'attachment; filename=bookings_report.pdf'
+    
+    return response
 
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port = 8000, debug=True)

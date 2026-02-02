@@ -18,37 +18,55 @@
 </head>
 <body>
 
-<nav class="navbar sticky-top navbar-expand-lg bg-body-tertiary">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="#">Hotel Management System</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link link-active" aria-current="page" href="{{url_for('dashboard')}}">Dashboard</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link link-active" href="{{url_for('manage_booking')}}">Manage Booking</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link link-active" href="{{url_for('manage_rooms')}}">Manage Rooms</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link link-active" href="#">Print</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
-        </li>
-      </ul>
-    </div>
-  </div>
-</nav>
 
-<div id="content">
-{% block content %}
-{% endblock %}
-</div>
+
+<body>
+    <button class="btn btn-primary d-lg-none m-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+        <i class="bi bi-list"></i> Menu
+    </button>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse offcanvas-lg offcanvas-start text-white">
+                <div class="position-sticky pt-3 h-100">
+                    <h5 class="px-3 mb-4 fw-bold text-uppercase tracking-wider">
+                        <i class="bi bi-building-fill-check me-2"></i>HMS Pro
+                    </h5>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white mb-2 py-3 rounded-start {{ 'active' if request.endpoint == 'dashboard' }}" href="{{url_for('dashboard')}}">
+                                <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white mb-2 py-3 {{ 'active' if request.endpoint == 'manage_booking' }}" href="{{url_for('manage_booking')}}">
+                                <i class="bi bi-calendar-check me-2"></i> Bookings
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white mb-2 py-3 {{ 'active' if request.endpoint == 'manage_rooms' }}" href="{{url_for('manage_rooms')}}">
+                                <i class="bi bi-door-open me-2"></i> Rooms
+                            </a>
+                        </li>
+                    </ul>
+                    <hr class="mx-3 mt-5">
+                    <div class="px-3">
+                        <a href="{{ url_for('logout') }}" class="btn btn-outline-danger w-100 btn-sm mt-2">
+                            <i class="bi bi-box-arrow-left me-2"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </nav>
+
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+                <div id="content">
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 </body>
 </html>

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Manage Rooms{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm mb-4">
+  <div class="card-header fw-bold">Add Room</div>
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <input name="room_no" class="form-control" placeholder="Room No" required>
+        </div>
+        <div class="col-md-3">
+          <select name="room_type" class="form-select" required>
+            <option disabled selected>Type</option>
+            <option>Single</option>
+            <option>Double</option>
+            <option>Deluxe</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <input type="number" name="price" class="form-control" placeholder="Price" required>
+        </div>
+        <div class="col-md-3">
+          <input type="file" name="photo" class="form-control" required>
+        </div>
+      </div>
+      <div class="mt-3 text-end">
+        <button class="btn btn-primary">
+          <i class="bi bi-plus-circle"></i> Add Room
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+</div>
+
+{% endblock %}

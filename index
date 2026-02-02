@@ -1,4 +1,10 @@
 
+requirements:
+    flask
+    wkhtmltopdf -engine
+    pdfkit - wrapper
+
+
 status:
     Booked
     Check in

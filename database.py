@@ -191,15 +191,37 @@ class Database():
         con.close()
         return row
 
-    def search_booking_paginated(self,field,keyword,page=1,per_page=5):
+    def search_booking_paginated(self,field,keyword,start_date,end_date,page=1,per_page=9):
         offset = (page-1)*per_page
         con = self.get_conn()
         cursor = con.cursor()
-        query = f"SELECT * FROM Bookings WHERE {field} LIKE ? ORDER BY Check_in_date DESC LIMIT ? OFFSET ?"
-        cursor.execute(query,(f"%{keyword}%",per_page,offset))      
-        rows = cursor.fetchall()
-        query = f"SELECT COUNT(*) as total FROM Bookings WHERE {field} LIKE ?"
-        cursor.execute(query,(f"%{keyword}%",))
+
+        query_parts = ["FROM Bookings WHERE 1=1"]
+        params = []
+
+        if keyword:
+            query_parts.append(f"AND {field} LIKE ? ")
+            params.append(f"%{keyword}%")
+
+        if start_date:
+            query_parts.append(f"AND check_in_date >= ? ")
+            params.append(start_date)
+
+        if end_date:
+            query_parts.append("AND check_in_date <= ? ")
+            params.append(end_date)
+
+        where_caluse = " ".join(query_parts)
+
+        query = f"SELECT * {where_caluse} ORDER BY book_id DESC LIMIT ? OFFSET ?"
+        try:
+            cursor.execute(query,params+[per_page,offset])   
+            rows = cursor.fetchall()
+        except Exception as e:
+            print("Error:",query)
+
+        query = f"SELECT COUNT(*) as total {where_caluse} "
+        cursor.execute(query,params)
         total = cursor.fetchone()["total"]
         con.close()
         return total,rows if rows else []
@@ -246,6 +268,8 @@ class Database():
                 strftime('%Y-%m', check_out_date) AS period,
                 SUM(totalprice) AS total_price
             FROM Bookings
+            WHERE status = 'Check out'
+            AND check_out_date <= date('now')
             GROUP BY period
             ORDER BY period 
             """
@@ -255,6 +279,8 @@ class Database():
                 strftime('%Y', check_out_date) AS period,
                 SUM(totalprice) AS total_price
             FROM Bookings
+            WHERE status = 'Check out'
+            AND check_out_date <= date('now')
             GROUP BY period
             ORDER BY period
             """
@@ -278,21 +304,27 @@ class Database():
         con.close()     
 
 
-    # inject_test_data() # Uncomment to run   
+    # inject_test_data() 
     def inject_test_data(self):
-        con =  self.get_conn()# Update with your DB name
+        con =  self.get_conn()
         cursor = con.cursor()
     
         # Let's create 1 fake booking for each of the last 6 months
-        for i in range(6):
-            # Calculate a date in the past
-            past_date = (datetime.now() - timedelta(days=i*30)).strftime('%Y-%m-%dT%H:%M')
+        # for i in range(6):
+        #     # Calculate a date in the past
+        #     past_date = (datetime.now() - timedelta(days=i*30)).strftime('%Y-%m-%dT%H:%M')
         
-            cursor.execute("""
-                INSERT INTO Bookings(first_name, last_name, status, totalprice, check_in_date)
-                VALUES (?, ?, ?, ?, ?)
-            """, (f"Guest_{i}", "Test", "Check out", random.randint(200, 800), past_date))
+        #     cursor.execute("""
+        #         INSERT INTO Bookings(first_name, last_name, status, totalprice, check_in_date)
+        #         VALUES (?, ?, ?, ?, ?)
+        #     """, (f"Guest_{i}", "Test", "Check out", random.randint(200, 800), past_date))
         
+        past_indate = datetime(2023,2,3,14,0).strftime('%Y-%m-%dT%H:%M')
+        past_outdate = datetime(2023,2,5,14,0).strftime('%Y-%m-%dT%H:%M')
+
+        cursor.execute("INSERT INTO Bookings(first_name,last_name,room_no,check_in_date,check_out_date,status,totalprice,email) VALUES(?,?,?,?,?,?,?,?)",
+        ("Test4","4",1,past_indate,past_outdate,"Check out",900,"test4@gmail.com"))
+
         con.commit()
         con.close()
         print("Success! You now have 6 months of fake data to see your chart.")
