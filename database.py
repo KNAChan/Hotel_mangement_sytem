@@ -26,32 +26,52 @@ class Database():
         room_type TEXT,
         price INTEGER,
         status TEXT,
-        photo TEXT
+        photo TEXT,
+        services TEXT,
+        description TEXT
         )
         """)
         con.commit()
         con.close()
 
-    def add_rooms(self,room_no,room_type,price,photo):
+    def add_rooms(self,room_no,room_type,price,photo,services,description):
         con = self.get_conn()
         cursor = con.cursor()
-        cursor.execute("INSERT INTO Rooms(room_no,room_type,price,status,photo) VALUES(?,?,?,?,?)",
-        (room_no,room_type,price,"Available",photo))
+        cursor.execute("INSERT INTO Rooms(room_no,room_type,price,status,photo,services,description) VALUES(?,?,?,?,?,?,?)",
+        (room_no,room_type,price,"Available",photo,services,description))
         con.commit()
         con.close()
 
-    def view_rooms_paginated(self,page=1,per_page=5):
+    def view_rooms_paginated(self,page=1,per_page=5,search_no=None,search_type=None):
         offset = (page - 1)* per_page
         con = self.get_conn()
         cursor = con.cursor()
-        cursor.execute("SELECT * FROM Rooms LIMIT ? OFFSET ?",(per_page,offset))
+
+        query = "SELECT * FROM Rooms WHERE 1=1 "
+        count_query = "SELECT COUNT(*) as total FROM Rooms WHERE 1=1 "
+        params = []
+
+        if search_no:
+            query += "AND room_no LIKE ? " 
+            count_query += "AND room_no LIKE ? "
+            params.append(f"%{search_no}%")
+
+        if search_type:
+            query += "AND room_type LIKE ? "
+            count_query += "AND room_type LIKE ?"
+            params.append(f"%{search_type}%")
+        
+        query += "LIMIT ? OFFSET ?"
+
+        cursor.execute(query,params + [per_page,offset])
         rows = cursor.fetchall()
         
-        cursor.execute("SELECT COUNT(*) as total FROM Rooms")
+        cursor.execute(count_query,params)
         total = cursor.fetchone()["total"]
 
         con.close()
         return rows,total
+    
 
     def get_room_byid(self,room_id):
         con = self.get_conn()
@@ -69,11 +89,11 @@ class Database():
         con.close()
         return row
 
-    def update_room(self,room_id,room_no,room_type,price,status):
+    def update_room(self,room_id,room_no,room_type,price,status,services,photo_name,description):
         con = self.get_conn()
         cursor = con.cursor()       
-        cursor.execute("UPDATE Rooms SET room_no=?, room_type=?, price=?, status=? WHERE id=?",
-        (room_no,room_type,price,status,room_id))
+        cursor.execute("UPDATE Rooms SET room_no=?, room_type=?, price=?, status=?,photo=?,services=?,description=?  WHERE id=?",
+        (room_no,room_type,price,status,photo_name,services,description,room_id))
         con.commit()
         con.close() 
     
@@ -100,7 +120,7 @@ class Database():
         con = self.get_conn()
         cursor = con.cursor() 
         cursor.execute("SELECT * FROM Rooms")
-        room = cursor.fetchone()
+        room = cursor.fetchone() or []
         con.close()
         return room
 
@@ -245,7 +265,7 @@ class Database():
     def delete_Table(self):
         con = self.get_conn()
         cursor = con.cursor()
-        cursor.execute("drop table Bookings")
+        cursor.execute("drop table Rooms")
         con.commit()
         con.close()
 

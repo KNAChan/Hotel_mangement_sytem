@@ -1,38 +1,155 @@
 {% extends "base.html" %}
-{% block title %}Manage Rooms{% endblock %}
+{% block title %}Add New Room{% endblock %}
 
 {% block content %}
-<div class="card shadow-sm mb-4">
-  <div class="card-header fw-bold">Add Room</div>
-  <div class="card-body">
-    <form method="post" enctype="multipart/form-data">
-      <div class="row g-3">
-        <div class="col-md-3">
-          <input name="room_no" class="form-control" placeholder="Room No" required>
+<style>
+    .form-container {
+        max-width: 800px;
+        background: #ffffff;
+        border-radius: 20px;
+        border: 1px solid #e0e6ed;
+        overflow: hidden;
+    }
+
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2.5rem;
+        color: white;
+        text-align: center;
+    }
+
+    .form-body { padding: 2.5rem; }
+
+    .form-control, .form-select {
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        border: 2px solid #f1f3f9;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.1);
+    }
+
+    /* Custom Checkbox Pills */
+    .service-items { display: flex; flex-wrap: wrap; gap: 10px; }
+    .service-check { display: none; }
+    .service-label {
+        padding: 8px 16px;
+        background: #f8f9fa;
+        border: 2px solid #eef0f7;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: 0.3s;
+    }
+    .service-check:checked + .service-label {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    .img-preview {
+        width: 100%;
+        height: 200px;
+        border: 2px dashed #cbd5e0;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8fafc;
+        overflow: hidden;
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        padding: 12px 30px;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: transform 0.2s;
+    }
+
+    .btn-submit:hover { transform: translateY(-2px); color: white; opacity: 0.9; }
+</style>
+
+<div class="container py-5 d-flex justify-content-center">
+    <div class="form-container shadow-lg w-100">
+        <div class="form-header">
+            <h2 class="fw-bold mb-1">Add New Room</h2>
+            <p class="mb-0 opacity-75">Fill in the details to expand your inventory</p>
         </div>
-        <div class="col-md-3">
-          <select name="room_type" class="form-select" required>
-            <option disabled selected>Type</option>
-            <option>Single</option>
-            <option>Double</option>
-            <option>Deluxe</option>
-          </select>
+
+        <div class="form-body">
+            <form method="post" action="{{url_for('add_room')}}" enctype="multipart/form-data">
+                <div class="row g-4">
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted">Room Number</label>
+                        <input type="text" name="room_no" class="form-control" placeholder="e.g. 3" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted">Room Type</label>
+                        <select name="room_type" class="form-select" required>
+                            <option value="" selected disabled>Select Type</option>
+                            <option>Single</option>
+                            <option>Double</option>
+                            <option>Deluxe</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted">Price per Night ($)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0">$</span>
+                            <input type="number" name="price" class="form-control" placeholder="0.00" required>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted">Room Photo</label>
+                        <input type="file" name="photo" id="photoInput" class="form-control" accept="image/*">
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-bold text-muted mb-3">Included Amenities</label>
+                        <div class="service-items">
+                            {% for value, label in [('wifi', 'Free Wi-Fi'), ('smoke', 'Smoking'), ('parking', 'Free Parking'), ('breakfast', 'Breakfast')] %}
+                            <input type="checkbox" name="services[]" value="{{ value }}" id="check-{{ value }}" class="service-check">
+                            <label for="check-{{ value }}" class="service-label">
+                                <i class="bi bi-check2-circle me-1"></i> {{ label }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-bold text-muted">Room Description</label>
+                        <textarea name="description" class="form-control" rows="4" placeholder="Describe the view, bed type, or special features..."></textarea>
+                    </div>
+
+                    <div class="col-12 d-flex gap-3 pt-4">
+                        <button type="submit" class="btn btn-submit text-white w-100">
+                            <i class="bi bi-plus-circle me-2"></i> Create Room
+                        </button>
+                        <a href="{{ url_for('manage_rooms') }}" class="btn btn-light rounded-pill px-4 align-self-center border">
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+            </form>
         </div>
-        <div class="col-md-3">
-          <input type="number" name="price" class="form-control" placeholder="Price" required>
-        </div>
-        <div class="col-md-3">
-          <input type="file" name="photo" class="form-control" required>
-        </div>
-      </div>
-      <div class="mt-3 text-end">
-        <button class="btn btn-primary">
-          <i class="bi bi-plus-circle"></i> Add Room
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
+    </div>
 </div>
 
+<script>
+    // Simple logic to ensure checkboxes look interactive
+    document.querySelectorAll('.service-label').forEach(label => {
+        label.addEventListener('click', () => {
+            // Visual feedback handled by CSS :checked
+        });
+    });
+</script>
 {% endblock %}

@@ -85,54 +85,85 @@ def dashboard():
 @app.route('/manage_rooms',methods=['GET','POST'])
 @login_required
 def manage_rooms():
+    
+    search_no = request.args.get('search_no','').strip()
+    search_type = request.args.get('search_type','')
+
+    allowed_fields = ("single","double","deluxe")
+    if search_type not in allowed_fields:
+        search_type = None
+
+    # Pagination
+    page = request.args.get('page', 1, type=int)
+    per_page = 5
+    rooms, total = DB.view_rooms_paginated(page, per_page,search_no,search_type)
+    total_pages = (total + per_page - 1) // per_page  # ceiling division
+
+    return render_template('manage_rooms.html',rooms=rooms,page=page,total_pages=total_pages)
+
+
+@app.route('/add_room',methods=['GET','POST'])
+@login_required
+def add_room():
     if request.method == 'POST':
         room_no = request.form["room_no"]
         room_type = request.form["room_type"]
         price = request.form["price"]
         photo = request.files["photo"]
 
-        photo_name = photo.filename
-        photo.save(os.path.join(app.config["UPLOAD_FOLDER"], photo_name))
+        if photo:
+            photo_name = photo.filename 
+            photo.save(os.path.join(app.config["UPLOAD_FOLDER"], photo_name))
+        else:
+            photo_name = ''
 
-        DB.add_rooms(room_no, room_type, price, photo_name)
+        description = request.form["description"]
+        services = request.form.getlist("services[]")
+        services = ",".join(services)
+        
+
+        DB.add_rooms(room_no, room_type, price, photo_name,services,description)
+        flash('Room added successfully!', 'success')
         return redirect(url_for("manage_rooms"))
 
-    # Pagination
-    page = request.args.get('page', 1, type=int)
-    per_page = 5
-    rooms, total = DB.view_rooms_paginated(page, per_page)
-    total_pages = (total + per_page - 1) // per_page  # ceiling division
-
-    return render_template('manage_rooms.html',rooms=rooms,page=page,total_pages=total_pages)
-
-
-@app.route('/add_room')
-@login_required
-def add_room():
     return render_template('add_rooms.html')
 
 @app.route('/edit_room/<int:id>',methods=['GET','POST'])
 @login_required
 def edit_room(id):
     room = DB.get_room_byid(id)
-
+    services = room['services'].split(",") if room['services'] else []
+    print(services)
     if request.method == 'POST':
+        photo = request.files.get("photo")
+        if photo and photo.filename != '':
+            photo_name = photo.filename
+            photo.save(os.path.join(app.config["UPLOAD_FOLDER"], photo_name))
+        else:
+            photo_name = room['photo']
+
         DB.update_room(
             id,
             request.form["room_no"],
             request.form["room_type"],
             request.form["price"],
-            request.form["status"]
+            request.form["status"],
+            ",".join(request.form.getlist("services[]")),
+            photo_name,
+            request.form["description"]
         )
+        flash('Room updated successfully!', 'success')
         return redirect(url_for('manage_rooms'))
 
-    return render_template('/edit_rooms.html',room=room)
+    return render_template('/edit_rooms.html',room=room,services=services)
 
-@app.route('/delete_room_route/<int:id>')
+@app.route('/delete_room_route/<int:id>', methods=['POST'])
 @login_required
 def delete_room_route(id):
     DB.delete_room(id)
+    flash('Room deleted successfully!', 'success')
     return redirect(url_for('manage_rooms'))
+
 
 
 @app.route('/manage_booking',methods=['GET','POST'])

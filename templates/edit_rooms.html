@@ -1,60 +1,177 @@
 {% extends "base.html" %}
-{% block title %}Edit Room{% endblock %}
+{% block title %}Edit Room: {{ room.room_no }}{% endblock %}
 
 {% block content %}
+<style>
+    .edit-container {
+        max-width: 850px;
+        background: #ffffff;
+        border-radius: 20px;
+        border: 1px solid #e0e6ed;
+        overflow: hidden;
+    }
 
-<div class="container mt-5 d-flex justify-content-center">
-  <div class="card shadow-sm w-75">
-    <div class="card-header bg-primary text-white text-center">
-      <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Edit Room</h4>
+    .edit-header {
+        background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); /* Warm Amber Gradient */
+        padding: 2.5rem;
+        color: #4a4a4a;
+        text-align: center;
+    }
+
+    .form-body { padding: 2.5rem; }
+
+    /* Modern Input Styling */
+    .form-control, .form-select {
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        border: 2px solid #f1f3f9;
+    }
+
+    .form-control[readonly] {
+        background-color: #f8f9fa;
+        border-color: #eef0f7;
+        color: #95a5a6;
+    }
+
+    /* Service Pills (Same as Add Room for consistency) */
+    .service-items { display: flex; flex-wrap: wrap; gap: 10px; }
+    .service-check { display: none; }
+    .service-label {
+        padding: 8px 18px;
+        background: #f8f9fa;
+        border: 2px solid #eef0f7;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: 0.3s;
+    }
+    .service-check:checked + .service-label {
+        background: #fda085;
+        color: white;
+        border-color: #fda085;
+    }
+
+    .current-photo-box {
+        border: 2px solid #f1f3f9;
+        border-radius: 15px;
+        padding: 10px;
+        background: #fafafa;
+        text-align: center;
+    }
+
+    .current-photo-box img {
+        max-height: 120px;
+        border-radius: 10px;
+        object-fit: cover;
+    }
+
+    .btn-update {
+        background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+        border: none;
+        color: #4a4a4a;
+        font-weight: 700;
+        padding: 12px 40px;
+        border-radius: 50px;
+        box-shadow: 0 4px 15px rgba(253, 160, 133, 0.3);
+    }
+
+    .btn-update:hover { transform: translateY(-2px); color: #000; }
+</style>
+
+<div class="container py-5 d-flex justify-content-center">
+    <div class="edit-container shadow-lg w-100">
+        <div class="edit-header">
+            <h2 class="fw-bold mb-1"><i class="bi bi-pencil-square me-2"></i>Edit Room Details</h2>
+            <p class="mb-0 opacity-75">Update information for Room <strong>{{ room.room_no }}</strong></p>
+        </div>
+
+        <div class="form-body">
+            <form method="post" enctype="multipart/form-data">
+                <div class="row g-4">
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Room Number</label>
+                        <input type="text" name="room_no" value="{{ room.room_no }}" class="form-control" readonly>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Room Type</label>
+                        <select name="room_type" class="form-select">
+                            <option {{ 'selected' if room.room_type=='Single' }}>Single</option>
+                            <option {{ 'selected' if room.room_type=='Double' }}>Double</option>
+                            <option {{ 'selected' if room.room_type=='Deluxe' }}>Deluxe</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Price per Night</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0">$</span>
+                            <input type="number" name="price" value="{{ room.price }}" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Current Status</label>
+                        <select name="status" class="form-select">
+                            <option {{ 'selected' if room.status=='Available' }}>Available</option>
+                            <option {{ 'selected' if room.status=='Booked' }}>Booked</option>
+                            <option {{ 'selected' if room.status=='Checkin' }}>Check in</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-bold text-muted small text-uppercase d-block mb-3">Room Imagery</label>
+                        <div class="row align-items-center">
+                            <div class="col-md-4">
+                                <div class="current-photo-box mb-3 mb-md-0">
+                                    <small class="text-muted d-block mb-2">Current Image</small>
+                                    {% if room.photo %}
+                                        <img src="{{ url_for('static', filename='uploads/'+room.photo) }}" alt="Room Photo">
+                                    {% else %}
+                                        <div class="py-4 text-muted small">No photo</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="p-3 border rounded-3 bg-light">
+                                    <label class="small fw-bold">Replace Photo</label>
+                                    <input type="file" name="photo" class="form-control mt-2">
+                                    <small class="text-muted mt-1 d-block">Leave blank to keep existing photo.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-bold text-muted small text-uppercase mb-3">Amenities</label>
+                        <div class="service-items">
+                            {% for value, label in [('wifi', 'Free Wi-Fi'), ('smoke', 'Smoking'), ('parking', 'Free Parking'), ('breakfast', 'Breakfast')] %}
+                            <input type="checkbox" name="services[]" value="{{ value }}" id="edit-{{ value }}" class="service-check"
+                                   {% if value in services %}checked{% endif %}>
+                            <label for="edit-{{ value }}" class="service-label">
+                                <i class="bi bi-tag-fill me-1"></i> {{ label }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Room Description</label>
+                        <textarea name="description" class="form-control" rows="4">{{ room.description }}</textarea>
+                    </div>
+
+                    <div class="col-12 d-flex gap-3 pt-4 border-top">
+                        <button type="submit" class="btn btn-update w-100">
+                            <i class="bi bi-cloud-arrow-up-fill me-2"></i> Save Changes
+                        </button>
+                        <a href="{{ url_for('manage_rooms') }}" class="btn btn-outline-secondary rounded-pill px-4 align-self-center">
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
-    <div class="card-body">
-      <form method="post" class="row g-3">
-
-        <!-- Room Number -->
-        <div class="col-md-6">
-          <label for="room_no" class="form-label fw-bold">Room Number</label>
-          <input type="text" id="room_no" name="room_no" value="{{ room.room_no }}" class="form-control" placeholder="Enter Room Number" readonly>
-        </div>
-
-        <!-- Room Type -->
-        <div class="col-md-6">
-          <label for="room_type" class="form-label fw-bold">Room Type</label>
-          <select id="room_type" name="room_type" class="form-select">
-            <option {{ 'selected' if room.room_type=='Single' }}>Single</option>
-            <option {{ 'selected' if room.room_type=='Double' }}>Double</option>
-            <option {{ 'selected' if room.room_type=='Deluxe' }}>Deluxe</option>
-          </select>
-        </div>
-
-        <!-- Price -->
-        <div class="col-md-6">
-          <label for="price" class="form-label fw-bold">Price</label>
-          <input type="number" id="price" name="price" value="{{ room.price }}" class="form-control" placeholder="Enter Price">
-        </div>
-
-        <!-- Status -->
-        <div class="col-md-6">
-          <label for="status" class="form-label fw-bold">Status</label>
-          <select id="status" name="status" class="form-select">
-            <option {{ 'selected' if room.status=='Available' }}>Available</option>
-            <option {{ 'selected' if room.status=='Booked' }}>Booked</option>
-            <option {{ 'selected' if room.status=='Checkin' }}>Check in</option>
-          </select>
-        </div>
-
-        <!-- Buttons -->
-        <div class="col-12 d-flex justify-content-center mt-4">
-          <button type="submit" class="btn btn-success me-3">
-            <i class="bi bi-save"></i> Update
-          </button>
-          <a href="{{ url_for('manage_rooms') }}" class="btn btn-secondary">
-            <i class="bi bi-x-circle"></i> Cancel
-          </a>
-        </div>
-
-      </form>
-    </div>
-  </div>
 </div>
 {% endblock %}

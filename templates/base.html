@@ -17,17 +17,14 @@
     <title>{% block title %}Home {% endblock %}</title>
 </head>
 <body>
-
-
-
-<body>
+<!-- Flash Messages -->
     <button class="btn btn-primary d-lg-none m-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
         <i class="bi bi-list"></i> Menu
     </button>
 
     <div class="container-fluid">
         <div class="row">
-            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse offcanvas-lg offcanvas-start text-white">
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse offcanvas-lg offcanvas-start text-white position-fixed">
                 <div class="position-sticky pt-3 h-100">
                     <h5 class="px-3 mb-4 fw-bold text-uppercase tracking-wider">
                         <i class="bi bi-building-fill-check me-2"></i>HMS Pro
@@ -57,7 +54,18 @@
                     </div>
                 </div>
             </nav>
-
+<div class="container mt-3">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm rounded-3" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+</div>
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
                 <div id="content">
                     {% block content %}{% endblock %}
@@ -66,7 +74,19 @@
         </div>
     </div>
 
+<script>
+  // Auto close Bootstrap alerts after 3 seconds
+  window.addEventListener('DOMContentLoaded', (event) => {
+    const alertList = document.querySelectorAll('.alert');
+    alertList.forEach(alert => {
+      setTimeout(() => {
+        const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+        bsAlert.close();
+      }, 1000); // 3000ms = 3 seconds
+    });
+  });
+</script>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
 </body>
 </html>

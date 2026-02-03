@@ -27,9 +27,9 @@
     <div class="container-fluid px-4 mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="fw-bold text-dark m-0">Booking Directory</h3>
-        <div class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill">
+        <!-- <div class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill">
             {{ bookingdata|length }} Total Bookings
-        </div>
+        </div> -->
     </div>
 
     <div class="card border-0 shadow-sm rounded-4 mb-4">
@@ -132,7 +132,7 @@
                                 {% endif %}
                                 <a href="{{ url_for('booking_operations', mode='delete', id=b.book_id) }}" 
                                    class="btn btn-sm btn-outline-danger" 
-                                   onclick="return confirm('Are you sure you want to delete this booking?')" title="Delete">
+                                   title="Delete">
                                     <i class="bi bi-trash"></i>
                                 </a>
                             </div>
