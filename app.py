@@ -37,7 +37,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'username' not in session:
-            flash("You must log in first!", "warning")
+            #flash("You must log in first!", "warning")
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -46,7 +46,7 @@ def login_required(f):
 @login_required
 def logout():
     session.pop('username', None)  # remove username from session
-    flash("You have been logged out.", "success")
+    #flash("You have been logged out.", "success")
     return redirect(url_for('login'))
 
 @app.route('/dashboard')
@@ -54,7 +54,7 @@ def logout():
 def dashboard():
     name = session.get("username")
     total_checkin = DB.totalCheckin()
-    total_room = len(DB.total_rooms())
+    total_room = DB.total_rooms()
     available_room = len(DB.get_available_rooms())
     booked_room = DB.get_booked_room()
     single_room,double_room,deluxe_room = DB.room_type()
@@ -105,8 +105,13 @@ def manage_rooms():
 @app.route('/add_room',methods=['GET','POST'])
 @login_required
 def add_room():
+    error = ''
     if request.method == 'POST':
         room_no = request.form["room_no"]
+        if DB.checksameRoomID(room_no):
+            error = "Room number is already exit"
+            return render_template('add_rooms.html',error=error)
+
         room_type = request.form["room_type"]
         price = request.form["price"]
         photo = request.files["photo"]
@@ -126,7 +131,7 @@ def add_room():
         flash('Room added successfully!', 'success')
         return redirect(url_for("manage_rooms"))
 
-    return render_template('add_rooms.html')
+    return render_template('add_rooms.html',error=error)
 
 @app.route('/edit_room/<int:id>',methods=['GET','POST'])
 @login_required
@@ -241,6 +246,7 @@ def booking_operations(mode,id=None):
                 DB.delete_booking(id)
                 # Mark the room as available
                 DB.status_changed(booking["room_no"], status="Available")
+                flash('successfully deleted!','success')
             return redirect(url_for('manage_booking'))
 
         firstname = request.form.get("firstname","").strip()
@@ -357,6 +363,7 @@ def booking_operations(mode,id=None):
         if mode == 'insert':
             DB.add_new_booking(firstname,lastname,phone,country,room_no,check_in_date,check_out_date,status,totalprice_input,dob,email,Noadults,Nokids,payment_type,holder_name,card_number,CVV)
             DB.status_changed(room_no,status)
+            flash('new booking successfully added!','success')
         elif mode == 'update' and id:
             stays,price_per_room = Cal_totalprice(booking)
             totalprice = price_per_room * stays
@@ -365,7 +372,7 @@ def booking_operations(mode,id=None):
                 DB.status_changed(room_no,"Available")
             else:
                 DB.status_changed(room_no,status)
-
+            flash('successfully updated!','success')
         return redirect(url_for('manage_booking'))
     return render_template(
         'booking_operations.html',

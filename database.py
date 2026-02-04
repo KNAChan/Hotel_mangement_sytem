@@ -119,9 +119,10 @@ class Database():
     def total_rooms(self):
         con = self.get_conn()
         cursor = con.cursor() 
-        cursor.execute("SELECT * FROM Rooms")
-        room = cursor.fetchone() or []
+        cursor.execute("SELECT COUNT(*) FROM Rooms")
+        room = cursor.fetchone()[0] or []
         con.close()
+        print(room)
         return room
 
     def room_type(self):
@@ -151,6 +152,13 @@ class Database():
         booked_room = cursor.fetchone()[0]
         con.close()
         return booked_room
+
+    def checksameRoomID(self,room_no):
+        con = self.get_conn()
+        cursor = con.cursor()
+        cursor.execute("SELECT 1 FROM Rooms WHERE room_no = ?",(room_no,))
+        exists = cursor.fetchone() is not None
+        return exists
 
 
 #/////////////////////////////////////////////////////////////////
