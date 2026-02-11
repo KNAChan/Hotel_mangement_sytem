@@ -35,7 +35,7 @@
                 </div>
 
                 <div class="card-body p-4 p-md-5">
-                    <form method="post" class="needs-validation" novalidate>
+                    <form method="post" id="bookingForm" class="needs-validation" novalidate>
                         
                         <div class="mb-5">
                             <h5 class="form-section-title fw-bold text-dark text-uppercase small letter-spacing-1">
@@ -45,13 +45,15 @@
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">First Name</label>
                                     <input type="text" name="firstname" class="form-control" placeholder="John"
-                                    value="{{ booking.first_name if booking else '' }}" {% if mode == 'delete' %}disabled{% endif %} required>
+                                    value="{% if inputData and inputData.firstname %}{{ inputData.firstname }}
+                                            {% elif booking %}{{ booking.first_name }}{% else %}{% endif %}"
+                                    {% if mode == 'delete' %}disabled{% endif %} required>
                                     <div class="text-danger small mt-1">{{ errorList.firstname if errorList and errorList.firstname }}</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Last Name</label>
                                     <input type="text" name="lastname" class="form-control" placeholder="Doe" 
-                                    value="{{inputData.last_name if inputData.last_name else (booking.last_name if booking else '') }}"
+                                    value="{{inputData.lastname if inputData else (booking.last_name if booking else '')}}"
                                     {% if mode == 'delete' %}disabled{% endif %} required>
                                     <div class="text-danger small mt-1">{{ errorList.lastname if errorList and errorList.lastname }}</div>
                                 </div>
@@ -60,7 +62,9 @@
                                     <div class="input-group">
                                         <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope"></i></span>
                                         <input type="email" name="email" class="form-control border-start-0" placeholder="john@example.com"
-                                        value="{{ booking.email if booking else '' }}" {% if mode == 'delete' %}disabled{% endif %} required>
+                                        value="{% if inputData and inputData.email %}{{ inputData.email }}
+                                            {% elif booking %}{{ booking.email }}{% else %}{% endif %}"
+                                        {% if mode == 'delete' %}disabled{% endif %} required>
                                     </div>
                                     <div class="text-danger small mt-1">{{ errorList.email if errorList and errorList.email }}</div>
                                 </div>
@@ -69,18 +73,26 @@
                                     <div class="input-group">
                                         <span class="input-group-text bg-light border-end-0"><i class="bi bi-phone"></i></span>
                                         <input type="text" name="phoneNumber" class="form-control border-start-0" placeholder="09..."
-                                        value="{{ booking.phone if booking else '' }}" {% if mode == 'delete' %}disabled{% endif %} required>
+                                        value="{% if inputData and inputData.phoneNumber %}{{ inputData.phoneNumber }}
+                                            {% elif booking %}{{ booking.phone }}{% else %}{% endif %}"
+                                        {% if mode == 'delete' %}disabled{% endif %} required>
                                     </div>
+                                    <div class="text-danger small mt-1">{{ errorList.phone if errorList and errorList.phone }}</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Date of Birth</label>
                                     <input type="date" name="dob" class="form-control" 
-                                    value="{{ booking.dob if booking else '' }}" {% if mode == 'delete' %}disabled{% endif %} required>
+                                    value="{{ inputData.get('dob') if inputData else (booking.dob if booking else '')}}"
+                                    {% if mode == 'delete' %}disabled{% endif %} required>
+                                    <div class="text-danger small mt-1">{{ errorList.dob if errorList and errorList.dob }}</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Country</label>
                                     <input type="text" name="country" class="form-control" 
-                                    value="{{ booking.country if booking else '' }}" {% if mode == 'delete' %}disabled{% endif %} required>
+                                    value="{% if inputData and inputData.country %}{{ inputData.country }}
+                                            {% elif booking %}{{ booking.country }}{% else %}{% endif %}"
+                                    {% if mode == 'delete' %}disabled{% endif %} required>
+                                    <div class="text-danger small mt-1">{{ errorList.country if errorList and errorList.country }}</div>
                                 </div>
                             </div>
                         </div>
@@ -94,34 +106,50 @@
                                     <label class="form-label fw-semibold text-primary"><i class="bi bi-box-arrow-in-right me-1"></i>Check-In Date</label>
                                     {% if mode == 'delete' or (mode=='update' and booking.status in ['Check in','Check out']) %}
                                         <input type="datetime-local" class="form-control bg-light" value="{{ booking.check_in_date if booking else '' }}" disabled>
-                                        <input type="hidden" name="check_in_date" value="{{ booking.check_in_date if booking else '' }}">
+                                        <input type="hidden" name="check_in_date" value="{{ inputData.get('check_in_date') if inputData else (booking.check_in_date if booking else '') }}">
                                     {% else %}
-                                        <input type="datetime-local" id="check_in_date" name="check_in_date" class="form-control" value="{{ booking.check_in_date if booking else '' }}" required>
+                                        <input type="datetime-local" id="check_in_date" name="check_in_date" class="form-control" 
+                                        value="{{ inputData.get('check_in_date') if inputData else (booking.check_in_date if booking else '') }}" required>
                                     {% endif %}
+                                    <div class="text-danger small mt-1">{{ errorList.check_in_date if errorList and errorList.check_in_date }}</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold text-danger"><i class="bi bi-box-arrow-left me-1"></i>Check-Out Date</label>
                                     {% if mode == 'delete' or (mode=='update' and booking.status=='Check out') %}
                                         <input type="datetime-local" class="form-control bg-light" value="{{ booking.check_out_date if booking else '' }}" disabled>
-                                        <input type="hidden" name="Check-Out-Date" value="{{ booking.check_out_date if booking else '' }}">
+                                        <input type="hidden" name="Check_Out_Date" value="{{ inputData.get('Check_Out_Date') if inputData else (booking.check_out_date if booking else '') }}">
                                     {% else %}
-                                        <input type="datetime-local" id="Check-Out-Date" name="Check-Out-Date" class="form-control" value="{{ booking.check_out_date if booking else '' }}" required>
+                                        <input type="datetime-local" id="Check_Out_Date" name="Check_Out_Date" class="form-control" 
+                                        value="{{ inputData.get('Check_Out_Date') if inputData else (booking.check_out_date if booking else '') }}" required>
                                     {% endif %}
+                                    <div class="text-danger small mt-1">{{ errorList.check_out_date if errorList and errorList.check_out_date }}</div>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label fw-semibold">Adults</label>
                                     <select name="Noadults" class="form-select" {% if mode == 'delete' %}disabled{% endif %} required>
                                         <option value="" disabled selected>Select</option>
                                         {% for i in range(1, 4) %}
-                                        <option value="{{i}}" {{ 'selected' if booking and booking.no_of_adults|int == i }}>{{i}}</option>
+                                        <option value="{{i}}" 
+                                        {% if inputData and inputData.get('Noadults')|int == i %}
+                                        selected
+                                        {% elif booking and booking.no_of_adults|int == i %}
+                                        selected
+                                        {% endif %}>{{i}}</option>
                                         {% endfor %}
                                     </select>
+                                    <div class="text-danger small mt-1">{{ errorList.Noadults if errorList and errorList.Noadults }}</div>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label fw-semibold">Kids</label>
                                     <select name="Nokids" class="form-select" {% if mode == 'delete' %}disabled{% endif %} required>
                                         {% for i in range(0, 4) %}
-                                        <option value="{{i}}" {{ 'selected' if booking and booking.no_of_kids|int == i }}>{{i}}</option>
+                                        <option value="{{i}}" 
+                                        {% if inputData and inputData.get('Nokids')|int == i %}
+                                        selected
+                                        {% elif booking and booking.no_of_kids|int == i %}
+                                        selected
+                                        {% endif %}>
+                                        {{i}}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -130,9 +158,17 @@
                                     <select id="room_no" name="room_no" class="form-select fw-bold text-primary" {% if mode == 'delete' %}disabled{% endif %} required>
                                         <option value="" disabled selected>Select Room</option>
                                         {% for room in available_rooms %}
-                                            <option value="{{ room }}" {% if booking and booking.room_no|string == room|string %}selected{% endif %}>Room {{ room }}</option>
+                                            <option value="{{ room }}" 
+                                            {% if inputData and inputData.get('room_no')|string == room|string %}
+                                            selected
+                                            {% elif booking and booking.room_no|string == room|string %}
+                                             selected
+                                            {% endif %}>
+                                            Room {{ room }}
+                                            </option>
                                         {% endfor %}
                                     </select>
+                                    <div class="text-danger small mt-1">{{ errorList.room_no if errorList and errorList.room_no }}</div>
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label fw-semibold">Reservation Status</label>
@@ -166,17 +202,22 @@
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Card Holder Name</label>
                                     <input type="text" name="holder_name" class="form-control" 
-                                    value="{{inputData.holder_name if inputData.holder_name else (booking.holder_name if booking else '') }}" {% if mode == 'delete' %}disabled{% endif %} required>
+                                    value="{{inputData.holder_name if inputData.holder_name else (booking.holder_name if booking else '') }}" 
+                                    {% if mode == 'delete' %}disabled{% endif %} required>
+                                    <div class="text-danger small mt-1">{{ errorList.holder_name if errorList and errorList.holder_name }}</div>
                                 </div>
                                 <div class="col-md-8">
                                     <label class="form-label fw-semibold">Card Number</label>
                                     <input type="text" name="card_number" class="form-control" placeholder="0000 0000 0000 0000"
-                                    value="{{ booking.card_number if booking else '' }}" {% if mode == 'delete' %}disabled{% endif %} required>
+                                    value="{{ inputData.card_number if inputData.card_number else(booking.card_number if booking else '') }}" 
+                                    {% if mode == 'delete' %}disabled{% endif %} required>
+                                    <div class="text-danger small mt-1">{{ errorList.card_number if errorList and errorList.card_number }}</div>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label fw-semibold">CVV</label>
                                     <input type="text" name="CVV" class="form-control" placeholder="123"
-                                    value="{{ booking.CVV if booking else '' }}" {% if mode == 'delete' %}disabled{% endif %} required>
+                                    value="{{inputData.CVV if inputData.CVV else(booking.CVV if booking else '') }}" {% if mode == 'delete' %}disabled{% endif %} required>
+                                    <div class="text-danger small mt-1">{{ errorList.CVV if errorList and errorList.CVV }}</div>
                                 </div>
                             </div>
                         </div>
@@ -189,18 +230,20 @@
                                     </h6>
                                     <div class="d-flex justify-content-between mb-2 small text-muted">
                                         <span>Nightly Rate:</span>
-                                        <span>$<span id="one_room_price">{{ price_per_room if mode!='insert' else 0 }}</span></span>
+                                        <span>$<span id="one_room_price">{{ price_per_room if mode!='insert' else (inputData.get('price') if inputData else 0) }}</span></span>
                                     </div>
                                     <div class="d-flex justify-content-between mb-3 small text-muted">
                                         <span>Total Stay:</span>
-                                        <span><span id="stays">{{ stays if mode != 'insert' else 0 }}</span> nights</span>
+                                        <span><span id="stays">{{ stays if mode != 'insert' else (inputData.get('diffDays') if inputData else 0) }}</span> nights</span>
                                     </div>
                                     <div class="pt-3 border-top d-flex justify-content-between align-items-center">
                                         <span class="h6 mb-0 fw-bold">Grand Total</span>
                                         <span class="h4 mb-0 fw-bolder text-primary">
                                             {% if mode == 'insert' %}
-                                                $<span id="room_price_display">0.00</span>
-                                                <input type="hidden" name="price" id="price">
+                                                $<span id="room_price_display">
+                                                    {{inputData.get('price') if inputData else '0.00'}}
+                                                </span>
+                                                <input type="hidden" name="price" id="price" value="{{inputData.get('price') if inputData else ''}}">
                                             {% else %}
                                                 ${{ "{:,.2f}".format(booking.totalprice) if booking else '0.00' }}
                                             {% endif %}
@@ -232,12 +275,13 @@
 document.addEventListener("DOMContentLoaded", function() {
   const roomSelect = document.getElementById("room_no");
   const checkIn = document.getElementById("check_in_date");
-  const checkOut = document.getElementById("Check-Out-Date");
+  const checkOut = document.getElementById("Check_Out_Date");
   const priceDisplay = document.getElementById("room_price_display");
   const priceInput = document.getElementById("price");
   const one_room_price = document.getElementById("one_room_price");
   const stays = document.getElementById("stays");
 
+if (roomSelect.value && checkIn.value && checkOut.value) {
   function updatePrice() {
     const room_no = roomSelect.value;
     const check_in = checkIn.value;
@@ -278,11 +322,12 @@ document.addEventListener("DOMContentLoaded", function() {
         stays.textContent = diffDays;
       });
   }
-
+}
   roomSelect.addEventListener("change", updatePrice);
   checkIn.addEventListener("change", updatePrice);
   checkOut.addEventListener("change", updatePrice);
 });
 </script>
 {% endif %}
+
 {% endblock %}

@@ -255,7 +255,7 @@ def booking_operations(mode,id=None):
         country = request.form.get("country","").strip()
         room_no = request.form.get("room_no")
         check_in_date = request.form.get("check_in_date","").strip()
-        check_out_date = request.form.get("Check-Out-Date","").strip()
+        check_out_date = request.form.get("Check_Out_Date","").strip()
         status = request.form.get("status","").strip()
         dob = request.form.get("dob","").strip()
         email = request.form.get("email","").strip()
@@ -357,7 +357,7 @@ def booking_operations(mode,id=None):
                 stays = stays,
                 price_per_room = price_per_room,
                 errorList=errorList,
-                inputData=request.form
+                inputData=request.form.to_dict()
                 )
 
         if mode == 'insert':
