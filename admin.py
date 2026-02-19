@@ -162,6 +162,15 @@ def edit_room(id):
 
     return render_template('/edit_rooms.html',room=room,services=services)
 
+@app.route('/view_room/<int:id>',methods=['GET','POST'])
+@login_required
+def view_room(id):
+    room = DB.get_room_byid(id)
+    services = room['services'].split(",") if room['services'] else []
+
+    return render_template('/view_room.html',room=room,services=services)
+
+
 @app.route('/delete_room_route/<int:id>', methods=['POST'])
 @login_required
 def delete_room_route(id):
@@ -207,6 +216,7 @@ def manage_booking():
         page=page,
         total_pages=total_pages)
 
+
 def Cal_totalprice(booking):
     today = date.today()
     in_datetime = booking["check_in_date"]
@@ -214,6 +224,7 @@ def Cal_totalprice(booking):
     out_datetime = booking["check_out_date"]
     out_date = datetime.strptime(out_datetime, "%Y-%m-%dT%H:%M").date()
     stays = (out_date - in_date).days
+
     room = DB.get_room_bynumber(booking["room_no"])
     price_per_room = room["price"] if room else 0 
 
@@ -365,9 +376,32 @@ def booking_operations(mode,id=None):
             DB.status_changed(room_no,status)
             flash('new booking successfully added!','success')
         elif mode == 'update' and id:
-            stays,price_per_room = Cal_totalprice(booking)
+            if status == 'Cancel':
+                booking = DB.get_booking_byid(id)
+                if booking:
+                    DB.booking_Cancel(id)
+                    # Mark the room as available
+                    DB.status_changed(booking["room_no"], status="Available")
+                    flash('successfully Cancel!','success')
+                return redirect(url_for('manage_booking'))
+
+            # stays,price_per_room = Cal_totalprice(booking)
+            # totalprice = price_per_room * stays
+
+            # Calculate the total price
+            in_date = datetime.strptime(check_in_date, "%Y-%m-%dT%H:%M").date()
+            out_date = datetime.strptime(check_out_date, "%Y-%m-%dT%H:%M").date()
+            stays = (out_date - in_date).days
+
+            room = DB.get_room_bynumber(room_no)
+            price_per_room = room["price"] if room else 0
+
             totalprice = price_per_room * stays
+
             DB.update_booking(id,firstname,lastname,phone,country,room_no,check_in_date,check_out_date,status,totalprice,dob,email,Noadults,Nokids,payment_type,holder_name,card_number,CVV)
+            print("Current Room: ",current_room)
+            if current_room != room_no:
+                DB.changeRoom(current_room)
             if status == 'Check out':
                 DB.status_changed(room_no,"Available")
             else:

@@ -160,6 +160,12 @@ class Database():
         exists = cursor.fetchone() is not None
         return exists
 
+    def changeRoom(self,current_room):
+        con = self.get_conn()
+        cursor = con.cursor()
+        cursor.execute("UPDATE Rooms SET status=? WHERE room_no=?",('Available',current_room))
+        con.commit()
+        con.close()
 
 #/////////////////////////////////////////////////////////////////
 
@@ -197,6 +203,7 @@ class Database():
         cursor.execute("INSERT INTO Bookings(first_name,last_name,phone,country,room_no,check_in_date,check_out_date,status,totalprice,DOB,email,no_of_adults,no_of_kids,payment_type,holder_name,card_number,CVV)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (firstname,lastname,phone,country,room_no,check_in_date,check_out_date,status,totalprice,dob,email,Noadults,Nokids,payment_type,holder_name,card_number,CVV))
         con.commit()
+        print("Totalprice = ",totalprice)
         con.close()
 
     def view_booking_paginated(self,page=1,per_page=5):
@@ -269,6 +276,13 @@ class Database():
         con.commit()
         con.close()
 
+    def booking_Cancel(self,id):
+        con = self.get_conn()
+        cursor = con.cursor()
+        cursor.execute("UPDATE Bookings SET status = ? WHERE book_id =?",('Cancel',id))
+        con.commit()
+        con.close()
+
 
     def delete_Table(self):
         con = self.get_conn()
@@ -284,7 +298,6 @@ class Database():
         (status,room_no))
         con.commit()
         con.close()
-
 
     def price_Cal(self,view):
         con = self.get_conn()

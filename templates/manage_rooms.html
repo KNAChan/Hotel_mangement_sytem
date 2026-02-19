@@ -154,7 +154,10 @@
                 <tbody>
                     {% for r in rooms %}
                     <tr>
-                        <td data-label="ID" class="col-id text-muted ps-md-4">#{{ r.id }}</td>
+                        <td data-label="ID" class="col-id text-muted ps-md-4">
+                            <a href="{{ url_for('view_room', id=r.id) }}" class="text-decoration-none fw-bold" title="view">
+                                #{{ r.id }}</td>
+                            </a>
                         <td data-label="Room Details" class="col-details">
                             <div class="d-flex align-items-center mobile-nowrap text-start">
                                 <img src="{{ url_for('static', filename='uploads/' + r.photo) }}" class="room-img me-3">
@@ -178,9 +181,11 @@
                                 <a href="{{ url_for('edit_room', id=r.id) }}" class="btn btn-sm btn-outline-warning rounded-circle" title="Edit">
                                     <i class="bi bi-pencil"></i>
                                 </a>
+                                {% if r.status == 'Available' %}                                
                                 <button type="button" class="btn btn-outline-danger rounded-circle btn-sm btn-delete" data-room-id="{{ r.id }}" title="Delete">
                                     <i class="bi bi-trash"></i>
                                 </button>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>

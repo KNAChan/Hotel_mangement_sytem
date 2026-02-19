@@ -96,7 +96,11 @@
                 <tbody>
                     {% for b in bookingdata %}
                     <tr>
-                        <td class="ps-4 fw-bold text-muted">#{{ b.book_id }}</td>
+                        <td class="ps-4 fw-bold text-muted">
+                            <a href="{{ url_for('booking_operations', mode='select', id=b.book_id) }}" class="text-decoration-none fw-bold" title="select">
+                                #{{ b.book_id }}
+                            </a>
+                        </td>
                         <td>
                             <div class="d-flex flex-column">
                                 <span class="fw-bold text-dark">{{ b.first_name }} {{ b.last_name }}</span>
@@ -117,6 +121,8 @@
                         <td>
                             {% if b.status == 'Booked' %}
                             <span class="badge bg-success-subtle text-success border border-success-subtle">Booked</span>
+                            {% elif b.status == 'Cancel' %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Cancel</span>
                             {% elif b.status == 'Check out' %}
                             <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Checked Out</span>
                             {% else %}
@@ -125,16 +131,18 @@
                         </td>
                         <td class="text-end pe-4">
                             <div class="btn-group">
-                                {% if b.status != 'Check out' %}
+                                {% if b.status not in ['Check out','Cancel'] %}
                                 <a href="{{ url_for('booking_operations', mode='update', id=b.book_id) }}" class="btn btn-sm btn-outline-primary" title="Edit">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
                                 {% endif %}
+                                {% if b.status in ['Check out','Cancel'] %}
                                 <a href="{{ url_for('booking_operations', mode='delete', id=b.book_id) }}" 
                                    class="btn btn-sm btn-outline-danger" 
                                    title="Delete">
                                     <i class="bi bi-trash"></i>
                                 </a>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>

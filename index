@@ -6,7 +6,9 @@ requirements:
 
 
 status:
+    Available
     Booked
+    Cancel
     Check in
     Check out
     
